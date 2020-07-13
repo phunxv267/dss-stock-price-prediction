@@ -1,2 +1,49 @@
+from os.path import join
+
+import pandas as pd
+
 WINDOW_SIZE = 20
 DATA_PATH = '../resources/'
+STOCK_TEST = join(DATA_PATH, 'stock_test.csv')
+STOCK_TRAIN = join(DATA_PATH, 'stock_train.csv')
+DF_STOCK = join(DATA_PATH, 'b3_stocks_1994_2020.csv')
+
+SPAN = 5
+SMOOTH_ALPHA = 0.3
+
+PRICE_COLS = ['open', 'close', 'high', 'low']
+
+NON_PRICE_COLS = ['volume', '']
+
+PREDICTED_TICKERS = ['BOVA11', 'BBDC4', 'CIEL3', 'ITUB4', 'PETR4']
+
+DEV_DATE = pd.to_datetime('2018-10-01')
+TEST_DATE = pd.to_datetime('2019-07-29')
+
+func_groups = ['Cycle Indicators', 'Math Operators', 'Math Transform', 'Momentum Indicators', 'Overlap Studies',
+               'Pattern Recognition', 'Price Transform', 'Statistic Functions', 'Volatility Indicators',
+               'Volume Indicators']
+PROC_COLS = ['HT_DCPERIOD', 'HT_DCPHASE', 'HT_PHASOR_i', 'HT_PHASOR_q', 'HT_SINE_s', 'HT_SINE_l', 'HT_TRENDMODE',
+             'ADD', 'DIV', 'MAX', 'MAXINDEX',
+             'MIN', 'MININDEX', 'MINMAX_m', 'MINMAX_m.1', 'MINMAXINDEX_m', 'MINMAXINDEX_m.1', 'MULT', 'SUB', 'SUM',
+             'ACOS', 'ASIN', 'ATAN', 'CEIL', 'COS', 'COSH', 'EXP', 'FLOOR', 'LN', 'LOG10', 'SIN', 'SINH', 'SQRT',
+             'TAN', 'TANH', 'ADX', 'ADXR', 'APO', 'AROON_a', 'AROON_a.1', 'AROONOSC', 'BOP', 'CCI', 'CMO', 'DX',
+             'MACD_m', 'MACD_m.1', 'MACD_m.2', 'MACDEXT_m', 'MACDEXT_m.1', 'MACDEXT_m.2', 'MACDFIX_m', 'MACDFIX_m.1',
+             'MACDFIX_m.2', 'MFI', 'MINUS_DI', 'MINUS_DM', 'MOM', 'PLUS_DI', 'PLUS_DM', 'PPO', 'ROC', 'ROCP', 'ROCR',
+             'ROCR100', 'RSI', 'STOCH_s', 'STOCH_s.1', 'STOCHF_f', 'STOCHF_f.1', 'STOCHRSI_f', 'STOCHRSI_f.1',
+             'TRIX', 'ULTOSC', 'WILLR', 'BBANDS_u', 'BBANDS_m', 'BBANDS_l', 'DEMA', 'EMA', 'HT_TRENDLINE', 'KAMA',
+             'MA', 'MAMA_m', 'MAMA_f', 'MIDPOINT', 'MIDPRICE', 'SAR', 'SAREXT', 'SMA', 'T3', 'TEMA', 'TRIMA', 'WMA',
+             'CDL2CROWS', 'CDL3BLACKCROWS', 'CDL3INSIDE', 'CDL3LINESTRIKE', 'CDL3OUTSIDE', 'CDL3STARSINSOUTH',
+             'CDL3WHITESOLDIERS', 'CDLABANDONEDBABY', 'CDLADVANCEBLOCK', 'CDLBELTHOLD', 'CDLBREAKAWAY',
+             'CDLCLOSINGMARUBOZU', 'CDLCONCEALBABYSWALL', 'CDLCOUNTERATTACK', 'CDLDARKCLOUDCOVER', 'CDLDOJI',
+             'CDLDOJISTAR', 'CDLDRAGONFLYDOJI', 'CDLENGULFING', 'CDLEVENINGDOJISTAR', 'CDLEVENINGSTAR',
+             'CDLGAPSIDESIDEWHITE', 'CDLGRAVESTONEDOJI', 'CDLHAMMER', 'CDLHANGINGMAN', 'CDLHARAMI', 'CDLHARAMICROSS',
+             'CDLHIGHWAVE', 'CDLHIKKAKE', 'CDLHIKKAKEMOD', 'CDLHOMINGPIGEON', 'CDLIDENTICAL3CROWS', 'CDLINNECK',
+             'CDLINVERTEDHAMMER', 'CDLKICKING', 'CDLKICKINGBYLENGTH', 'CDLLADDERBOTTOM', 'CDLLONGLEGGEDDOJI',
+             'CDLLONGLINE', 'CDLMARUBOZU', 'CDLMATCHINGLOW', 'CDLMATHOLD', 'CDLMORNINGDOJISTAR', 'CDLMORNINGSTAR',
+             'CDLONNECK', 'CDLPIERCING', 'CDLRICKSHAWMAN', 'CDLRISEFALL3METHODS', 'CDLSEPARATINGLINES',
+             'CDLSHOOTINGSTAR', 'CDLSHORTLINE', 'CDLSPINNINGTOP', 'CDLSTALLEDPATTERN', 'CDLSTICKSANDWICH',
+             'CDLTAKURI', 'CDLTASUKIGAP', 'CDLTHRUSTING', 'CDLTRISTAR', 'CDLUNIQUE3RIVER', 'CDLUPSIDEGAP2CROWS',
+             'CDLXSIDEGAP3METHODS', 'AVGPRICE', 'MEDPRICE', 'TYPPRICE', 'WCLPRICE', 'BETA', 'CORREL', 'LINEARREG',
+             'LINEARREG_ANGLE', 'LINEARREG_INTERCEPT', 'LINEARREG_SLOPE', 'STDDEV', 'TSF', 'VAR', 'ATR', 'NATR',
+             'TRANGE', 'AD', 'ADOSC', 'OBV']
