@@ -135,3 +135,5 @@ test_*.py
 
 *.csv
 *.pkl
+
+*.h5
