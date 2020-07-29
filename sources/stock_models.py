@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import LSTM, Linear, CrossEntropyLoss
 from torch.optim import Adam
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import classification_report, accuracy_score
@@ -20,10 +21,11 @@ class StockLSTM(nn.Module):
                                bidirectional=is_directional)
 
         self.out_layer = Linear(hidden_size * 1, 2)  # doing classification
+        self.drop_out = nn.Dropout(0.3)
 
     def forward(self, in_feature):
         out, (h_state, c_state) = self.lstm_model(in_feature, None)
-        output = self.out_layer(out[:, -1, :])
+        output = self.out_layer(self.drop_out(out[:, -1, :]))
 
         return output
 
@@ -32,29 +34,29 @@ class Trainer:
     def __init__(self, input_size, hidden_size, num_layers,
                  is_directional, batch_size, learn_rate, num_epochs):
         self.num_epochs = num_epochs
+        self.batch_size = batch_size
         train_stock = StockDataset('train')
-        test_stock = StockDataset('test')
 
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-        # self.device = 'cpu'
-        print('Done load dataset')
+        print('Done loading dataset')
+        print(len(train_stock))
         self.train_dloader = DataLoader(dataset=train_stock,
                                         batch_size=batch_size,
                                         shuffle=True)
-        self.test_dloader = DataLoader(dataset=test_stock,
-                                       batch_size=batch_size,
-                                       shuffle=False)
         self.stock_model = StockLSTM(input_size, hidden_size, num_layers, is_directional)
         self.stock_model = self.stock_model.double().to(self.device)
 
         self.criterion = CrossEntropyLoss()
         self.optimizer = Adam(self.stock_model.parameters(), lr=learn_rate)
+        self.scheduler = StepLR(self.optimizer, step_size=1, gamma=0.5)
 
     def train(self):
         for ep in range(self.num_epochs):
             self.stock_model.train()
             total_loss = 0
-            with tqdm(ncols=200, total=len(self.train_dloader))as p_bar:
+            step_mark = 0
+            highest_score = 0.0
+            with tqdm(total=len(self.train_dloader), ncols=100) as pbar:
                 for i, (x_train, y_train) in enumerate(self.train_dloader):
                     x_train, y_train = Helpers.convert_feature(x_train, torch.DoubleTensor), \
                                        Helpers.convert_feature(y_train, torch.LongTensor)
@@ -65,27 +67,46 @@ class Trainer:
                     total_loss += loss.item()
                     self.optimizer.step()
 
-                    p_bar.set_description(
-                        'Train step %s/%s - epoch %s - loss %.3f' % (i + 1, len(self.train_dloader), ep, loss.item()))
+                    pbar.set_description('Epoch %s - Iteration %s - loss %.3f ' % (ep + 1, i + 1, loss.item()))
+                    pbar.update(1)
 
             print('*** End epoch. Evaluating ... ***')
-            self.evalute()
+
+            accuracy = self.evaluate()
+            if accuracy > highest_score:
+                highest_score = accuracy
+            else:
+                step_mark += 1
+            if step_mark == 3:
+                self.scheduler.step()
+            print('Epoch accuracy: %.3f - Best accuracy %.3f ' % (accuracy, highest_score))
             print('**********************************************')
 
-    def evalute(self):
+    def evaluate(self):
         self.stock_model.eval()
+        ticker_acc = []
         with torch.no_grad():
-            all_pred = []
-            all_label = []
-            for i, (x_feature, y_label) in tqdm(enumerate(self.test_dloader)):
-                model_out = self.stock_model(x_feature)
-                pred = model_out.topk(1)[1].cpu().numpy().tolist()
-                all_pred.extend(pred)
-                all_label.extend(y_label)
+            for ticker in PREDICTED_TICKERS:
+                test_stock = StockDataset('test', ticker)
+                test_dloader = DataLoader(dataset=test_stock,
+                                          batch_size=self.batch_size,
+                                          shuffle=False)
+                all_pred = []
+                all_label = []
+                for i, (x_feature, y_label) in tqdm(enumerate(test_dloader)):
+                    x_feature, y_label = Helpers.convert_feature(x_feature, torch.DoubleTensor), \
+                                         Helpers.convert_feature(y_label, torch.LongTensor)
+                    model_out = self.stock_model(x_feature)
+                    pred = model_out.topk(1)[1].cpu().numpy().tolist()
+                    all_pred.extend(pred)
+                    all_label.extend(y_label.cpu().numpy().tolist())
 
-            accuracy = accuracy_score(np.array(all_label), np.array(all_pred))
-            print('Accuracy %.3f ' % accuracy)
-            print(classification_report(np.array(all_label), np.array(all_pred)))
+                accuracy = accuracy_score(np.array(all_label), np.array(all_pred))
+                ticker_acc.append(accuracy)
+                print('\n ##################### %s ################## ' % ticker)
+                print(classification_report(np.array(all_label), np.array(all_pred)))
+                print('Ticker: %s - accuracy %.3f ' % (ticker, accuracy))
+        return np.mean(ticker_acc)
 
     def save_model(self, epoch, model_sdict, optim_sdict, loss):
         torch.save({
@@ -112,8 +133,8 @@ kargs = {'input_size': 177,
          'num_layers': 1,
          'is_directional': False,
          'batch_size': 32,
-         'learn_rate': 0.001,
+         'learn_rate': 0.0005,
          'num_epochs': 10}
 
 trainer = Trainer(**kargs)
-trainer.evalute()
+trainer.train()
